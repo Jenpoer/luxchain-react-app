@@ -17,11 +17,14 @@ import {
   Col,
   Row,
   Alert,
+  Modal,
+  ModalBody,
 } from "reactstrap";
 
 import {
   registerAsset,
   connectWallet,
+  verifyBrand,
   getCurrentWalletConnected,
 } from "dapp/interact";
 import { uploadFiles, uploadJson } from "dapp/ipfs";
@@ -33,6 +36,8 @@ import TransparentFooter from "components/Footers/TransparentFooter.js";
 function UploadPage() {
   const [firstFocus, setFirstFocus] = React.useState(false);
   const [lastFocus, setLastFocus] = React.useState(false);
+
+  const [loading, setLoading] = React.useState(false);
 
   const [formData, setFormData] = React.useState({
     name: "",
@@ -100,8 +105,22 @@ function UploadPage() {
   const handleSubmit = async (event) => {
     event.preventDefault(); // Prevent the default form submission
 
+    setLoading(true);
+
     // Check for connected wallet
     const { address, status: _status } = await getCurrentWalletConnected();
+
+    // Check if wallet is a brand account
+    const isBrand = await verifyBrand(address);
+
+    if (!isBrand) {
+      setStatus({
+        color: "danger",
+        message: "You are not a registered brand address!",
+        open: true,
+      });
+      throw new Error("You are not a registered brand address!");
+    }
 
     if (_status.color === "danger") {
       setStatus({ ..._status, open: true });
@@ -135,11 +154,23 @@ function UploadPage() {
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+
+    setLoading(false);
   };
 
   return (
     <>
       <ExamplesNavbar />
+      <Modal modalClassName="modal-mini modal-info" isOpen={loading}>
+        <div className="modal-header justify-content-center">
+          <div className="modal-profile">
+            <i className="now-ui-icons loader_refresh spin"></i>
+          </div>
+        </div>
+        <ModalBody>
+          <p>Creating asset...</p>
+        </ModalBody>
+      </Modal>
       <div className="page-header clear-filter" filter-color="blue">
         <div
           className="page-header-image"
@@ -173,7 +204,7 @@ function UploadPage() {
               <Card className="p-4">
                 <Form className="form" onSubmit={handleSubmit}>
                   <CardHeader className="text-center">
-                    <div className="pull-right">
+                    {/* <div className="pull-right">
                       <Button
                         className="btn-round"
                         color="info"
@@ -188,7 +219,7 @@ function UploadPage() {
                         Connect Wallet
                       </Button>
                     </div>
-                    <br />
+                    <br /> */}
                     <h2 className="title text-dark">Create Asset</h2>
                     <p className="description text-secondary">
                       Your project is very important to us.

@@ -35,10 +35,19 @@ function ProfilePageHeader(props) {
           ref={pageHeader}
         ></div>
         <Container>
-          <div className="photo-container">
-            <img alt="..." src={require("assets/img/ryan.jpg")}></img>
-          </div>
-          <h3 className="title">Ryan Scheinder</h3>
+          {props.isBrand ? (
+            <i
+              className="now-ui-icons business_badge"
+              style={{ fontSize: 100 }}
+            ></i>
+          ) : (
+            <i
+              className="now-ui-icons users_single-02"
+              style={{ fontSize: 100 }}
+            ></i>
+          )}
+
+          <h3 className="title">{props.username}</h3>
           <p className="category">{props.address}</p>
           {/* <div className="content">
             <div className="social-description">

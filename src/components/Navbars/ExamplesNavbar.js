@@ -12,13 +12,20 @@ import {
   NavItem,
   NavLink,
   Nav,
+  NavbarText,
   Container,
   UncontrolledTooltip,
 } from "reactstrap";
 
+import { getDigitalIdentity, getCurrentWalletConnected } from "dapp/interact";
+
 function ExamplesNavbar() {
   const [navbarColor, setNavbarColor] = React.useState("navbar-transparent");
   const [collapseOpen, setCollapseOpen] = React.useState(false);
+  const [username, setUsername] = React.useState("");
+  const [address, setAddress] = React.useState("");
+  const [isBrand, setIsBrand] = React.useState(false);
+
   React.useEffect(() => {
     const updateNavbarColor = () => {
       if (
@@ -38,6 +45,18 @@ function ExamplesNavbar() {
       window.removeEventListener("scroll", updateNavbarColor);
     };
   });
+
+  React.useEffect(async () => {
+    const { address, status } = await getCurrentWalletConnected();
+
+    if (status.color == "success") {
+      setAddress(address);
+      const digitalIdentity = await getDigitalIdentity(address);
+      setUsername(digitalIdentity.name);
+      setIsBrand(digitalIdentity.isBrand);
+    }
+  }, []);
+
   return (
     <>
       {collapseOpen ? (
@@ -51,42 +70,6 @@ function ExamplesNavbar() {
       ) : null}
       <Navbar className={"fixed-top " + navbarColor} color="info" expand="lg">
         <Container>
-          <UncontrolledDropdown className="button-dropdown">
-            <DropdownToggle
-              caret
-              data-toggle="dropdown"
-              href="#pablo"
-              id="navbarDropdown"
-              tag="a"
-              onClick={(e) => e.preventDefault()}
-            >
-              <span className="button-bar"></span>
-              <span className="button-bar"></span>
-              <span className="button-bar"></span>
-            </DropdownToggle>
-            <DropdownMenu aria-labelledby="navbarDropdown">
-              <DropdownItem header tag="a">
-                Dropdown header
-              </DropdownItem>
-              <DropdownItem href="#pablo" onClick={(e) => e.preventDefault()}>
-                Action
-              </DropdownItem>
-              <DropdownItem href="#pablo" onClick={(e) => e.preventDefault()}>
-                Another action
-              </DropdownItem>
-              <DropdownItem href="#pablo" onClick={(e) => e.preventDefault()}>
-                Something else here
-              </DropdownItem>
-              <DropdownItem divider></DropdownItem>
-              <DropdownItem href="#pablo" onClick={(e) => e.preventDefault()}>
-                Separated link
-              </DropdownItem>
-              <DropdownItem divider></DropdownItem>
-              <DropdownItem href="#pablo" onClick={(e) => e.preventDefault()}>
-                One more separated link
-              </DropdownItem>
-            </DropdownMenu>
-          </UncontrolledDropdown>
           <div className="navbar-translate">
             <NavbarBrand href="/index" id="navbar-brand">
               LuxChain
@@ -112,9 +95,20 @@ function ExamplesNavbar() {
           >
             <Nav navbar>
               <NavItem>
-                <NavLink href="/login">
-                  Login
-                </NavLink>
+                {username === "" ? (
+                  <NavLink href="/login">Login</NavLink>
+                ) : (
+                  <NavLink href={"/profile/" + address}>
+                    {" "}
+                    {isBrand ? (
+                      <i className="now-ui-icons business_badge"></i>
+                    ) : (
+                      <i className="now-ui-icons users_single-02"></i>
+                    )}
+                    &nbsp;
+                    {username}
+                  </NavLink>
+                )}
               </NavItem>
             </Nav>
           </Collapse>

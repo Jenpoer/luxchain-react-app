@@ -2,12 +2,61 @@
     {
         "inputs": [
             {
+                "internalType": "string",
+                "name": "_brandName",
+                "type": "string"
+            },
+            {
                 "internalType": "address",
                 "name": "_brandAddress",
                 "type": "address"
             }
         ],
         "name": "addBrandAccount",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "_username",
+                "type": "string"
+            },
+            {
+                "internalType": "address",
+                "name": "_userAddress",
+                "type": "address"
+            }
+        ],
+        "name": "addUser",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "_assetId",
+                "type": "string"
+            }
+        ],
+        "name": "cancelTransaction",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "_assetId",
+                "type": "string"
+            }
+        ],
+        "name": "confirmTransferAsset",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -22,33 +71,6 @@
         ],
         "stateMutability": "nonpayable",
         "type": "constructor"
-    },
-    {
-        "inputs": [],
-        "name": "ECDSAInvalidSignature",
-        "type": "error"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "length",
-                "type": "uint256"
-            }
-        ],
-        "name": "ECDSAInvalidSignatureLength",
-        "type": "error"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "bytes32",
-                "name": "s",
-                "type": "bytes32"
-            }
-        ],
-        "name": "ECDSAInvalidSignatureS",
-        "type": "error"
     },
     {
         "anonymous": false,
@@ -76,37 +98,6 @@
         "type": "event"
     },
     {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": false,
-                "internalType": "string",
-                "name": "assetId",
-                "type": "string"
-            },
-            {
-                "indexed": true,
-                "internalType": "address",
-                "name": "from",
-                "type": "address"
-            },
-            {
-                "indexed": true,
-                "internalType": "address",
-                "name": "to",
-                "type": "address"
-            },
-            {
-                "indexed": false,
-                "internalType": "bytes",
-                "name": "signature",
-                "type": "bytes"
-            }
-        ],
-        "name": "AssetTransferredWithSignature",
-        "type": "event"
-    },
-    {
         "inputs": [
             {
                 "internalType": "string",
@@ -114,17 +105,12 @@
                 "type": "string"
             },
             {
-                "internalType": "string",
-                "name": "_name",
-                "type": "string"
-            },
-            {
-                "internalType": "string",
-                "name": "_metadata",
-                "type": "string"
+                "internalType": "address",
+                "name": "_newOwner",
+                "type": "address"
             }
         ],
-        "name": "registerAsset",
+        "name": "initiateTransferAsset",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -153,47 +139,6 @@
         "type": "function"
     },
     {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "_assetId",
-                "type": "string"
-            },
-            {
-                "internalType": "address",
-                "name": "_newOwner",
-                "type": "address"
-            }
-        ],
-        "name": "transferAsset",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "_assetId",
-                "type": "string"
-            },
-            {
-                "internalType": "address",
-                "name": "_newOwner",
-                "type": "address"
-            },
-            {
-                "internalType": "bytes",
-                "name": "_signature",
-                "type": "bytes"
-            }
-        ],
-        "name": "transferAssetWithSignature",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
         "inputs": [],
         "name": "adminAddress",
         "outputs": [
@@ -201,6 +146,124 @@
                 "internalType": "address",
                 "name": "",
                 "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "_assetId",
+                "type": "string"
+            }
+        ],
+        "name": "getAsset",
+        "outputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "string",
+                        "name": "name",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "owner",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "metadata",
+                        "type": "string"
+                    }
+                ],
+                "internalType": "struct DigitalOwnership.DigitalAsset",
+                "name": "",
+                "type": "tuple"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_address",
+                "type": "address"
+            }
+        ],
+        "name": "getDigitalIdentity",
+        "outputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "string",
+                        "name": "name",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "_address",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "bool",
+                        "name": "isBrand",
+                        "type": "bool"
+                    }
+                ],
+                "internalType": "struct DigitalOwnership.DigitalIdentity",
+                "name": "",
+                "type": "tuple"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "_assetId",
+                "type": "string"
+            }
+        ],
+        "name": "getPendingTransactions",
+        "outputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "string",
+                        "name": "assetId",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "from",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "to",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "timestamp",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "enum DigitalOwnership.TransactionStatus",
+                        "name": "status",
+                        "type": "uint8"
+                    }
+                ],
+                "internalType": "struct DigitalOwnership.Transaction",
+                "name": "",
+                "type": "tuple"
             }
         ],
         "stateMutability": "view",
@@ -223,30 +286,6 @@
             }
         ],
         "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "bytes32",
-                "name": "hash",
-                "type": "bytes32"
-            },
-            {
-                "internalType": "bytes",
-                "name": "signature",
-                "type": "bytes"
-            }
-        ],
-        "name": "recoverSigner",
-        "outputs": [
-            {
-                "internalType": "address",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "pure",
         "type": "function"
     },
     {
@@ -280,6 +319,11 @@
                         "internalType": "uint256",
                         "name": "timestamp",
                         "type": "uint256"
+                    },
+                    {
+                        "internalType": "enum DigitalOwnership.TransactionStatus",
+                        "name": "status",
+                        "type": "uint8"
                     }
                 ],
                 "internalType": "struct DigitalOwnership.Transaction[]",

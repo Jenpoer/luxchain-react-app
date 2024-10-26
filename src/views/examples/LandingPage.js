@@ -10,13 +10,32 @@ import {
   Col,
   Card,
   CardBody,
+  CardTitle,
+  CardHeader,
+  CardFooter,
   Pagination,
   PaginationItem,
   PaginationLink,
+  Form,
+  Input,
+  InputGroup,
+  InputGroupText,
+  InputGroupAddon,
+  Alert,
 } from "reactstrap";
 
 // Connect to smart contract
-import { digitalOwnershipContract, showOwnershipHistory } from "dapp/interact";
+import {
+  digitalOwnershipContract,
+  showOwnershipHistory,
+  getDigitalIdentity,
+  getCurrentWalletConnected,
+  getPendingTransactions,
+  initiateAssetTransfer,
+  cancelAssetTransfer,
+  confirmAssetTransfer,
+  getAssetInfo,
+} from "dapp/interact";
 import { retrieveFile, createSignedURL } from "dapp/ipfs";
 
 import { useParams } from "react-router-dom";
@@ -30,6 +49,10 @@ import CarouselSection from "views/index-sections/Carousel";
 function LandingPage() {
   const { assetId } = useParams();
 
+  const [currentUser, setCurrentUser] = React.useState("");
+  const [pendingTransaction, setPendingTransaction] = React.useState(null);
+  const [recipientAddress, setRecipientAddress] = React.useState("");
+
   const [firstFocus, setFirstFocus] = React.useState(false);
   const [lastFocus, setLastFocus] = React.useState(false);
   const [assetData, setAssetData] = React.useState({});
@@ -37,6 +60,12 @@ function LandingPage() {
   const [ownershipHistory, setOwnershipHistory] = React.useState([]);
   const [activePage, setActivePage] = React.useState(0);
   const [loading, setLoading] = React.useState(true);
+
+  const [transferStatus, setTransferStatus] = React.useState({
+    color: "info",
+    message: "",
+    open: false,
+  });
 
   React.useEffect(() => {
     fetchAssetInformation();
@@ -56,9 +85,12 @@ function LandingPage() {
   async function fetchAssetInformation() {
     setLoading(true);
 
-    const _assetData = await retrieveFile(
-      "bafkreihkyg75gbude6lzxi4l52pug27yhffpxhpco4tsbkt3im3n6ajooa"
-    );
+    const { address, status } = await getCurrentWalletConnected();
+    setCurrentUser(address);
+
+    const assetInfo = await getAssetInfo(assetId);
+
+    const _assetData = await retrieveFile(assetInfo.metadata);
     setAssetData(_assetData.data);
     console.log(_assetData);
 
@@ -79,22 +111,42 @@ function LandingPage() {
     setImages(_images);
 
     const _ownershipHistory = await showOwnershipHistory(assetId);
-    setOwnershipHistory(
-      _ownershipHistory.map((val) => {
-        return {
-          assetId: val.assetId,
-          to: val.to,
-          from: val.from,
-          timestamp: val.timestamp,
-        };
-      })
-    );
+
+    console.log(_ownershipHistory);
+
+    const ownershipHistoryList = [];
+
+    for (const val of _ownershipHistory) {
+      const _digitalIdentity = await getDigitalIdentity(val.to);
+      ownershipHistoryList.push({
+        assetId: val.assetId,
+        owner: {
+          username: _digitalIdentity.name,
+          address: val.to,
+        },
+        timestamp: val.timestamp,
+      });
+    }
+
+    setOwnershipHistory(ownershipHistoryList);
+
+    const _pendingTransaction = await getPendingTransactions(assetId);
+
+    if (Number(_pendingTransaction.to) !== 0) {
+      setPendingTransaction({
+        assetId: _pendingTransaction.assetId,
+        from: _pendingTransaction.from,
+        to: _pendingTransaction.to,
+      });
+    }
+
     setLoading(false);
   }
 
   function listenToAssetTransfer() {
     digitalOwnershipContract.events.AssetTransferred({}, (error, data) => {
       if (data) {
+        console.log(data);
       }
     });
   }
@@ -108,6 +160,37 @@ function LandingPage() {
     ));
 
     return <div>{textWithBreaks}</div>;
+  };
+
+  const initiateTransfer = async (e) => {
+    e.preventDefault();
+    if (recipientAddress !== "") {
+      const { status } = await initiateAssetTransfer(assetId, recipientAddress);
+      setTransferStatus({ ...status, open: true });
+    } else {
+      setTransferStatus({
+        color: "danger",
+        message: "Please input an address",
+        open: true,
+      });
+    }
+  };
+
+  const cancelTransfer = async (e) => {
+    e.preventDefault();
+    const { status } = await cancelAssetTransfer(assetId);
+    setTransferStatus({ ...status, open: true });
+
+    // Update pending transaction
+    setPendingTransaction(null);
+  };
+
+  const confirmTransfer = async (e) => {
+    e.preventDefault();
+    const { status } = await confirmAssetTransfer(assetId);
+    setTransferStatus({ ...status, open: true });
+
+    setPendingTransaction(null);
   };
 
   const handlePageChange = (e, pageNumber) => {
@@ -166,16 +249,12 @@ function LandingPage() {
                   <Card>
                     <CardBody>
                       <div className="team-player m-2">
-                        <Col className="ml-auto mr-auto" sm="6">
-                          <img
-                            alt="..."
-                            className="rounded-circle img-fluid img-raised"
-                            src={require("assets/img/eva.jpg")}
-                          ></img>
-                        </Col>
-                        <h3 className="title">Display Name</h3>
+                        <h3 className="title">
+                          {" "}
+                          {ownershipHistory[activePage].owner.username}
+                        </h3>
                         <p className="category text-info">
-                          {ownershipHistory[activePage].to}
+                          {ownershipHistory[activePage].owner.address}
                         </p>
                         <p className="description">
                           {new Date(
@@ -229,71 +308,156 @@ function LandingPage() {
             </Row>
           </Container>
         </div>
-        {/* <div className="section section-contact-us text-center">
+        <div
+          className="section section-signup"
+          style={{
+            backgroundImage: "url(" + require("assets/img/bg11.jpg") + ")",
+            backgroundSize: "cover",
+            backgroundPosition: "top center",
+            minHeight: "700px",
+          }}
+        >
           <Container>
-            <h2 className="title">Want to work with us?</h2>
-            <p className="description">Your project is very important to us.</p>
-            <Row>
-              <Col className="text-center ml-auto mr-auto" lg="6" md="8">
-                <InputGroup
-                  className={
-                    "input-lg" + (firstFocus ? " input-group-focus" : "")
-                  }
-                >
-                  <InputGroupAddon addonType="prepend">
-                    <InputGroupText>
-                      <i className="now-ui-icons users_circle-08"></i>
-                    </InputGroupText>
-                  </InputGroupAddon>
-                  <Input
-                    placeholder="First Name..."
-                    type="text"
-                    onFocus={() => setFirstFocus(true)}
-                    onBlur={() => setFirstFocus(false)}
-                  ></Input>
-                </InputGroup>
-                <InputGroup
-                  className={
-                    "input-lg" + (lastFocus ? " input-group-focus" : "")
-                  }
-                >
-                  <InputGroupAddon addonType="prepend">
-                    <InputGroupText>
-                      <i className="now-ui-icons ui-1_email-85"></i>
-                    </InputGroupText>
-                  </InputGroupAddon>
-                  <Input
-                    placeholder="Email..."
-                    type="text"
-                    onFocus={() => setLastFocus(true)}
-                    onBlur={() => setLastFocus(false)}
-                  ></Input>
-                </InputGroup>
-                <div className="textarea-container">
-                  <Input
-                    cols="80"
-                    name="name"
-                    placeholder="Type a message..."
-                    rows="4"
-                    type="textarea"
-                  ></Input>
+            <Alert color={transferStatus.color} isOpen={transferStatus.open}>
+              <Container>
+                <div className="alert-icon">
+                  <i className="now-ui-icons travel_info"></i>
                 </div>
-                <div className="send-button">
-                  <Button
-                    block
-                    className="btn-round"
-                    color="info"
-                    href="#pablo"
-                    onClick={(e) => e.preventDefault()}
-                    size="lg"
-                  >
-                    Send Message
-                  </Button>
-                </div>
-              </Col>
-            </Row>
+                {transferStatus.message}
+                <button
+                  type="button"
+                  className="close"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setTransferStatus({ ...transferStatus, open: false });
+                  }}
+                >
+                  <span aria-hidden="true">
+                    <i className="now-ui-icons ui-1_simple-remove"></i>
+                  </span>
+                </button>
+              </Container>
+            </Alert>
+            {ownershipHistory.length > 0 &&
+            currentUser.toLowerCase() ===
+              ownershipHistory[
+                ownershipHistory.length - 1
+              ].owner.address.toLowerCase() ? (
+              <Row>
+                <Card className="card-signup" data-background-color="blue">
+                  <Form action="" className="form" method="">
+                    <CardHeader className="text-center">
+                      <CardTitle className="title-up" tag="h3">
+                        Transfer Ownership
+                      </CardTitle>
+                    </CardHeader>
+                    <CardBody>
+                      {pendingTransaction ? (
+                        <p className="description">
+                          Transfer to {pendingTransaction.to} currently pending.
+                        </p>
+                      ) : (
+                        <InputGroup
+                          className={
+                            "no-border" +
+                            (firstFocus ? " input-group-focus" : "")
+                          }
+                        >
+                          <InputGroupAddon addonType="prepend">
+                            <InputGroupText>
+                              <i className="now-ui-icons users_circle-08"></i>
+                            </InputGroupText>
+                          </InputGroupAddon>
+                          <Input
+                            placeholder="Recipient address..."
+                            type="text"
+                            value={recipientAddress}
+                            onFocus={() => setFirstFocus(true)}
+                            onBlur={() => setFirstFocus(false)}
+                            onChange={(e) => {
+                              e.preventDefault();
+                              setRecipientAddress(e.target.value);
+                            }}
+                          ></Input>
+                        </InputGroup>
+                      )}
+                    </CardBody>
+                    <CardFooter className="text-center">
+                      {pendingTransaction ? (
+                        <Button
+                          className="btn-danger btn-round"
+                          color="info"
+                          onClick={cancelTransfer}
+                          size="lg"
+                        >
+                          Cancel
+                        </Button>
+                      ) : (
+                        <Button
+                          className="btn-neutral btn-round"
+                          color="info"
+                          onClick={initiateTransfer}
+                          size="lg"
+                        >
+                          Send
+                        </Button>
+                      )}
+                    </CardFooter>
+                  </Form>
+                </Card>
+              </Row>
+            ) : (
+              <></>
+            )}
+            {pendingTransaction &&
+            currentUser.toLowerCase() ===
+              pendingTransaction.to.toLowerCase() ? (
+              <Row className="mt-4">
+                <Card className="card-signup">
+                  <Form action="" className="form" method="">
+                    <CardHeader className="text-center">
+                      <CardTitle className="title-up" tag="h3">
+                        Pending Transaction
+                      </CardTitle>
+                    </CardHeader>
+                    <CardBody>
+                      <h5 className="description">
+                        <b>
+                          {
+                            ownershipHistory[ownershipHistory.length - 1].owner
+                              .username
+                          }
+                        </b>
+                        &nbsp; ({pendingTransaction.from}) is transferring
+                        ownership of this asset to you.
+                      </h5>
+                    </CardBody>
+                    <CardFooter className="text-center">
+                      <Button
+                        className="btn-success btn-round"
+                        color="info"
+                        onClick={confirmTransfer}
+                        size="lg"
+                      >
+                        Approve
+                      </Button>
+                      <Button
+                        className="btn-danger btn-round"
+                        color="info"
+                        onClick={cancelTransfer}
+                        size="lg"
+                      >
+                        Decline
+                      </Button>
+                    </CardFooter>
+                  </Form>
+                </Card>
+              </Row>
+            ) : (
+              <></>
+            )}
           </Container>
-        </div> */}
+        </div>
         <DefaultFooter />
       </div>
     </>
