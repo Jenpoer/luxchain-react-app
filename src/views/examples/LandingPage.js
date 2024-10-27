@@ -138,6 +138,7 @@ function LandingPage() {
         from: _pendingTransaction.from,
         to: _pendingTransaction.to,
       });
+      console.log(_pendingTransaction);
     }
 
     setLoading(false);

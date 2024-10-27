@@ -48,14 +48,8 @@ function ProfilePage() {
   const [isBrand, setIsBrand] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
 
-  React.useEffect(async () => {
-    setLoading(true);
-    // Fetch user's digital identity
-    await fetchDigitalIdentity();
-
-    // Retrieve user's assets
-    await fetchUserAssets();
-    setLoading(false);
+  React.useEffect(() => {
+    fetchProfilePageInfo();
 
     document.body.classList.add("profile-page");
     document.body.classList.add("sidebar-collapse");
@@ -66,26 +60,32 @@ function ProfilePage() {
       document.body.classList.remove("profile-page");
       document.body.classList.remove("sidebar-collapse");
     };
-  }, []);
+  }, [address]);
+
+  async function fetchProfilePageInfo() {
+    setLoading(true);
+    // Fetch user's digital identity
+    const _ = await fetchDigitalIdentity();
+
+    // Retrieve user's assets
+    const __ = await fetchUserAssets();
+    setLoading(false);
+  }
 
   async function fetchDigitalIdentity() {
     const digitalIdentity = await getDigitalIdentity(address);
     setUsername(digitalIdentity.name);
     setIsBrand(digitalIdentity.isBrand);
-    console.log(digitalIdentity);
   }
 
   async function fetchUserAssets() {
     const userAssetsList = await getUserAssets(address);
-    console.log(userAssetsList);
 
     const assetsList = [];
 
     for (let assetId of userAssetsList) {
       const assetInfo = await getAssetInfo(assetId);
-      console.log(assetInfo);
       const _assetData = await retrieveFile(assetInfo.metadata);
-      console.log(_assetData.data);
       const imageSrc = await createSignedURL(_assetData.data.images[0]);
       assetsList.push({
         src: imageSrc,
@@ -110,7 +110,11 @@ function ProfilePage() {
         </ModalBody>
       </Modal>
       <div className="wrapper">
-        <ProfilePageHeader username={username} address={address} isBrand={isBrand} />
+        <ProfilePageHeader
+          username={username}
+          address={address}
+          isBrand={isBrand}
+        />
         <div className="section">
           <Container>
             <div className="button-container">

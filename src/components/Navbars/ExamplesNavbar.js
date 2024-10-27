@@ -27,6 +27,7 @@ function ExamplesNavbar() {
   const [isBrand, setIsBrand] = React.useState(false);
 
   React.useEffect(() => {
+    fetchNavbarInfo();
     const updateNavbarColor = () => {
       if (
         document.documentElement.scrollTop > 399 ||
@@ -44,9 +45,9 @@ function ExamplesNavbar() {
     return function cleanup() {
       window.removeEventListener("scroll", updateNavbarColor);
     };
-  });
+  }, []);
 
-  React.useEffect(async () => {
+  const fetchNavbarInfo = async () => {
     const { address, status } = await getCurrentWalletConnected();
 
     if (status.color == "success") {
@@ -55,7 +56,7 @@ function ExamplesNavbar() {
       setUsername(digitalIdentity.name);
       setIsBrand(digitalIdentity.isBrand);
     }
-  }, []);
+  };
 
   return (
     <>

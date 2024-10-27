@@ -50,6 +50,7 @@ function LoginPage() {
     window.scrollTo(0, 0);
     document.body.scrollTop = 0;
     return function cleanup() {
+      console.log("cleanup");
       document.body.classList.remove("login-page");
       document.body.classList.remove("sidebar-collapse");
     };
@@ -58,39 +59,36 @@ function LoginPage() {
   const handleSignIn = async (e) => {
     e.preventDefault();
 
-    if (username === "") {
+    try {
+      if (username === "") {
+        throw new Error("Please enter a username!");
+      }
+
+      const { address, status: _status } = await connectWallet();
+
+      if (_status.color === "danger") {
+        throw new Error(_status.message);
+      }
+
+      const digitalIdentity = await getDigitalIdentity(address);
+
+      if (digitalIdentity.name === "") {
+        // Create digital identity
+        const { status: _status } = await registerDigitalIdentity(username);
+      } else if (digitalIdentity.name != username) {
+        throw new Error("Wrong username!");
+      }
+
+      // If you get to this point, means everything went well
+      // Login to the profile
+      navigate("/profile/" + address);
+    } catch (error) {
       setStatus({
         color: "danger",
-        message: "Please enter a username!",
+        message: error.message,
         open: true,
       });
-      return;
     }
-
-    const { address, status: _status } = await connectWallet();
-
-    if (_status.color === "danger") {
-      setStatus({ ..._status, open: true });
-      return;
-    }
-
-    const digitalIdentity = await getDigitalIdentity(address);
-
-    if (digitalIdentity.name === "") {
-      // Create digital identity
-      const { status: _status } = await registerDigitalIdentity(username);
-    } else if (digitalIdentity.name != username) {
-      setStatus({
-        color: "danger",
-        message: "Wrong username!",
-        open: true,
-      });
-      return;
-    }
-
-    // If you get to this point, means everything went well
-    // Login to the profile
-    navigate("/profile/" + address);
   };
 
   return (
