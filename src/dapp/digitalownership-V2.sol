@@ -120,17 +120,6 @@ contract DigitalOwnership {
     // Asset transferred event
     event AssetTransferred(string assetId, address indexed from, address indexed to);
 
-    // Register asset with metadata
-    // function registerAsset(string memory _assetId, string memory _name, string memory _metadata) public {
-    //     require(verifyBrandAddress(msg.sender), "You are not a registered brand");
-    //     require(assets[_assetId].owner == address(0), "Asset already exists");
-    //     DigitalAsset memory newAsset = DigitalAsset(_name, msg.sender, _metadata);
-    //     assets[_assetId] = newAsset;
-
-    //     // Record creation of asset
-    //     recordTransaction(_assetId, msg.sender, msg.sender);
-    // }
-
     // Register asset with IPFS hash
     function registerAssetWithIPFS(string memory _assetId, string memory _name, string memory _ipfsHash) public {
         require(verifyBrandAddress(msg.sender), "You are not a registered brand");
@@ -207,36 +196,5 @@ contract DigitalOwnership {
         // Remove transaction
         delete pendingTransactions[_assetId];
     }
-    
-    // Asset transferred event (with signature)
-    // event AssetTransferredWithSignature(string assetId, address indexed from, address indexed to, bytes signature);
-
-    // // Function to recover signer
-    // function recoverSigner(bytes32 hash, bytes memory signature) public pure returns (address) {
-	// 	    bytes32 messageDigest = keccak256(
-	//         abi.encodePacked("\x19Ethereum Signed Message:\n32", hash)
-    //         );
-	// 	    return ECDSA.recover(messageDigest, signature);
-    // }
-
-    // // Transfer an aseet with the signature
-    // function transferAssetWithSignature(string memory _assetId, address _newOwner, bytes memory _signature) public {
-    //     bytes32 messageHash = keccak256(abi.encodePacked(_assetId, _newOwner));
-    //     address signer = recoverSigner(messageHash, _signature);
-    //     require(signer == assets[_assetId].owner, "Signature does not match with the asset's owner");
-        
-    //     // Remove asset from previous owner's list
-    //     removeUserAsset(assets[_assetId].owner, _assetId);
-        
-    //     // Add asset to new owner's list
-    //     assets[_assetId].owner = _newOwner;
-    //     addUserAsset(_assetId);
-
-    //     // Record transfer of ownership
-    //     recordTransaction(_assetId, msg.sender, _newOwner);
-
-    //     emit AssetTransferredWithSignature(_assetId, msg.sender, _newOwner, _signature);    
-    // }
-
     
 }
